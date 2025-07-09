@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useDesktopStore } from '../../hooks/useDesktopStore';
 import { Maximize, Minimize } from 'lucide-react';
@@ -24,6 +23,64 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { openWindow } = useDesktopStore();
 
+  // 🔧 FULLSCREEN API FUNCTIONS - Now targets the entire document/root element
+  const enterFullscreen = async () => {
+    try {
+      // Target the entire document body or root element instead of just terminal
+      const targetElement = document.documentElement || document.body;
+      
+      if (!document.fullscreenElement) {
+        await targetElement.requestFullscreen();
+        setIsFullscreen(true);
+        return ['Entering fullscreen mode...', 'Press ESC or type "fullscreen" to exit', 'Entire application is now fullscreen', ''];
+      }
+    } catch (error) {
+      console.error('Error entering fullscreen:', error);
+      return ['Error: Could not enter fullscreen mode', 'Your browser may not support fullscreen API', ''];
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+      setIsFullscreen(false);
+      return ['Exiting fullscreen mode...', 'Application returned to normal view', ''];
+    } catch (error) {
+      console.error('Error exiting fullscreen:', error);
+      return ['Error: Could not exit fullscreen mode', ''];
+    }
+  };
+
+  // 🔧 HANDLE FULLSCREEN CHANGE EVENTS
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!document.fullscreenElement;
+      setIsFullscreen(isCurrentlyFullscreen);
+      
+      if (!isCurrentlyFullscreen) {
+        // User pressed ESC or exited fullscreen via browser
+        setLines(prev => [...prev, 
+          { type: 'output', content: 'Exited fullscreen mode - Application returned to normal view' },
+          { type: 'output', content: '' }
+        ]);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange); // Firefox
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange); // IE/Edge
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
   const commands = {
     help: {
       description: 'Show available commands',
@@ -35,7 +92,7 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
         '  contact    - Open Mail Client application',
         '  files      - Open File Explorer',
         '  clear      - Clear terminal screen',
-        '  fullscreen - Toggle fullscreen mode',
+        '  fullscreen - Toggle browser fullscreen mode (entire app)',
         '  whoami     - Display user information',
         '  date       - Show current date and time',
         '  skills     - List technical skills',
@@ -91,10 +148,13 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
       }
     },
     fullscreen: {
-      description: 'Toggle fullscreen mode',
-      action: () => {
-        setIsFullscreen(!isFullscreen);
-        return [`Fullscreen mode ${!isFullscreen ? 'enabled' : 'disabled'}`];
+      description: 'Toggle browser fullscreen mode (entire application)',
+      action: async () => {
+        if (isFullscreen || document.fullscreenElement) {
+          return await exitFullscreen();
+        } else {
+          return await enterFullscreen();
+        }
       }
     },
     whoami: {
@@ -207,7 +267,7 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
     }
   };
 
-  const executeCommand = (input: string) => {
+  const executeCommand = async (input: string) => {
     const trimmedInput = input.trim();
     const [command, ...args] = trimmedInput.split(' ');
     
@@ -227,7 +287,15 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
       setLines([...newLines, ...outputLines]);
     } else if (commands[command as keyof typeof commands]) {
       const commandData = commands[command as keyof typeof commands];
-      const output = commandData.action(args);
+      
+      // Handle async commands (like fullscreen)
+      let output;
+      if (command === 'fullscreen') {
+        output = await commandData.action(args);
+      } else {
+        output = commandData.action(args);
+      }
+      
       const outputLines = output.map(line => ({ type: 'output' as const, content: line }));
       setLines([...newLines, ...outputLines]);
     } else {
@@ -267,6 +335,9 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
         setHistoryIndex(-1);
         setCurrentInput('');
       }
+    } else if (e.key === 'Escape' && isFullscreen) {
+      // Allow ESC to exit fullscreen
+      exitFullscreen();
     }
   };
 
@@ -284,25 +355,16 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
 
   return (
     <div 
-      className={`h-full bg-black text-green-400 font-mono text-sm overflow-hidden flex flex-col ${
-        isFullscreen ? 'fixed inset-0 z-[9999]' : ''
-      }`}
+      ref={terminalRef}
+      className="h-full bg-black text-green-400 font-mono text-sm overflow-hidden flex flex-col"
       onClick={() => inputRef.current?.focus()}
     >
-      {isFullscreen && (
-        <div className="flex justify-end p-2">
-          <button
-            onClick={() => setIsFullscreen(false)}
-            className="text-green-400 hover:text-green-300 transition-colors"
-          >
-            <Minimize className="w-5 h-5" />
-          </button>
-        </div>
-      )}
-      
       <div 
-        ref={terminalRef}
         className="flex-1 overflow-auto p-4 custom-scrollbar"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#22c55e #000000'
+        }}
       >
         {lines.map((line, index) => (
           <div key={index} className={`whitespace-pre-wrap ${
@@ -330,11 +392,13 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
         </div>
       </div>
       
+      {/* Manual fullscreen toggle button (when not in fullscreen) */}
       {!isFullscreen && (
         <div className="absolute top-2 right-2">
           <button
-            onClick={() => setIsFullscreen(true)}
+            onClick={enterFullscreen}
             className="text-green-400 hover:text-green-300 transition-colors opacity-50 hover:opacity-100"
+            title="Enter fullscreen mode (entire application)"
           >
             <Maximize className="w-4 h-4" />
           </button>
