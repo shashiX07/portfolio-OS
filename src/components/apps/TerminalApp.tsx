@@ -143,8 +143,9 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
     clear: {
       description: 'Clear terminal screen',
       action: () => {
+        // 🔧 FIXED: Clear command now properly clears the screen
         setLines([]);
-        return [];
+        return null; // Return null to indicate no output should be added
       }
     },
     fullscreen: {
@@ -271,13 +272,19 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
     const trimmedInput = input.trim();
     const [command, ...args] = trimmedInput.split(' ');
     
-    // Add input to lines
-    const newLines = [...lines, { type: 'input' as const, content: `$ ${trimmedInput}` }];
-    
     if (command === '') {
-      setLines([...newLines, { type: 'output' as const, content: '' }]);
+      setLines(prev => [...prev, { type: 'input' as const, content: `$ ${trimmedInput}` }, { type: 'output' as const, content: '' }]);
       return;
     }
+    
+    // 🔧 SPECIAL HANDLING FOR CLEAR COMMAND
+    if (command === 'clear') {
+      setLines([]); // Clear everything including the input
+      return; // Don't add anything to lines
+    }
+    
+    // Add input to lines (except for clear command)
+    const newLines = [...lines, { type: 'input' as const, content: `$ ${trimmedInput}` }];
     
     // Handle 'sudo hire-me' as a special case
     if (trimmedInput === 'sudo hire-me') {
@@ -296,8 +303,17 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
         output = commandData.action(args);
       }
       
-      const outputLines = output.map(line => ({ type: 'output' as const, content: line }));
-      setLines([...newLines, ...outputLines]);
+      // 🔧 HANDLE NULL OUTPUT (for commands like clear)
+      if (output !== null && Array.isArray(output)) {
+        const outputLines = output.map(line => ({ type: 'output' as const, content: line }));
+        setLines([...newLines, ...outputLines]);
+      } else if (output !== null) {
+        // Handle single string output
+        setLines([...newLines, { type: 'output' as const, content: output }]);
+      } else {
+        // For null output (like clear), just set the input line
+        setLines(newLines);
+      }
     } else {
       setLines([
         ...newLines,
@@ -338,6 +354,11 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
     } else if (e.key === 'Escape' && isFullscreen) {
       // Allow ESC to exit fullscreen
       exitFullscreen();
+    } else if (e.key === 'l' && e.ctrlKey) {
+      // 🔧 BONUS: Ctrl+L also clears the terminal (like in real terminals)
+      e.preventDefault();
+      setLines([]);
+      setCurrentInput('');
     }
   };
 
@@ -359,6 +380,15 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
       className="h-full bg-black text-green-400 font-mono text-sm overflow-hidden flex flex-col"
       onClick={() => inputRef.current?.focus()}
     >
+      {/* Fullscreen indicator - only show when in fullscreen */}
+      {isFullscreen && (
+        <div className="absolute top-4 right-4 z-[9999] text-green-400 text-xs opacity-70">
+          <div className="bg-black/80 px-2 py-1 rounded border border-green-400/30">
+            🖥️ FULLSCREEN MODE - Press ESC or type "fullscreen" to exit
+          </div>
+        </div>
+      )}
+      
       <div 
         className="flex-1 overflow-auto p-4 custom-scrollbar"
         style={{
