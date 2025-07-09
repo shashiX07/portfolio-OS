@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Send, Mail, User, MessageSquare, CheckCircle } from 'lucide-react';
 
@@ -11,22 +10,43 @@ export const ContactApp: React.FC<{ windowId: string }> = () => {
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate sending email
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitted(true);
-    setIsSubmitting(false);
-    
-    // Reset form after a delay
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({ name: '', email: '', subject: '', message: '' });
-    }, 3000);
+    setError('');
+
+    try {
+      // Call your deployed email API service
+      const apiKey = import.meta.env.VITE_EMAIL_API_KEY;
+      console.log('API Key:', apiKey); // Debugging line to check API key
+      const response = await fetch('https://theemailservice.vercel.app/api/contact-form', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey || ''
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setIsSubmitted(true);
+        setTimeout(() => {
+          setIsSubmitted(false);
+          setFormData({ name: '', email: '', subject: '', message: '' });
+        }, 3000);
+      } else {
+        throw new Error(data.error || 'Failed to send email');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to send message. Please try again.');
+      console.error('Email error:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -62,6 +82,12 @@ export const ContactApp: React.FC<{ windowId: string }> = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium mb-2">
               <User className="w-4 h-4 inline mr-2" />
