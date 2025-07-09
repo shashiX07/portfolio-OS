@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { User, Download, Code, Briefcase, GraduationCap } from 'lucide-react';
 
@@ -10,6 +9,16 @@ export const AboutApp: React.FC<{ windowId: string }> = () => {
     { name: 'UI/UX Design', level: 75 },
     { name: 'Cloud Services', level: 85 }
   ];
+
+  const handleDownloadResume = () => {
+    // Create a link element to trigger download
+    const link = document.createElement('a');
+    link.href = '/Resume.pdf'; // Path to your resume in public folder
+    link.download = 'Shashikant_Resume.pdf'; // Name for downloaded file
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="p-6 h-full">
@@ -75,7 +84,10 @@ export const AboutApp: React.FC<{ windowId: string }> = () => {
 
         {/* Download Resume */}
         <div className="text-center">
-          <button className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+          <button 
+            onClick={handleDownloadResume}
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
             <Download className="w-4 h-4" />
             Download Resume
           </button>
