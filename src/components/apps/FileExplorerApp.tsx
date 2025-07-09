@@ -53,7 +53,7 @@ export const FileExplorerApp: React.FC<{ windowId: string }> = () => {
       { id: '21', name: 'Mere Saamne wali khidki.mp3', type: 'file', icon: Music, size: '3.1 MB', modified: '30 minutes ago', path: '/Music/Mere_Saamne_wali_khidki.mp3', fileType: 'music', downloadUrl: 'audio/meresaamnewalikhidki.mp3' }
     ],
     '/Documents/Certificates': [
-      { id: '22', name: 'Frontend Develope intern.pdf', type: 'file', icon: FileText, size: '500 KB', modified: '1 month ago', path: '/Documents/Certificates/shashikant_intership.pdf', fileType: 'pdf', downloadUrl: 'Documents/shashikant_intership.pdf' },
+            { id: '22', name: 'Frontend Developer Intern.pdf', type: 'file', icon: FileText, size: '500 KB', modified: '1 month ago', path: '/Documents/Certificates/shashikant_intership.pdf', fileType: 'pdf', downloadUrl: 'Documents/shashikant_intership.pdf' },
       { id: '23', name: 'RCA Appreciation cirtificate.png', type: 'file', icon: Image, size: '600 KB', modified: '2 months ago', path: '/Documents/Certificates/appreciation_certificate.png', fileType: 'image', downloadUrl: 'images/appreciation_certificate.png' }
     ]
   };
@@ -82,13 +82,15 @@ export const FileExplorerApp: React.FC<{ windowId: string }> = () => {
   };
 
   const handleItemDoubleClick = (item: FileItem) => {
-    if (item.type === 'file') {
+    if (item.type === 'folder') {
+      navigateToFolder(item.path);
+    } else if (item.type === 'file') {
       switch (item.fileType) {
         case 'image':
           openWindow('image-viewer', { imageSrc: item.downloadUrl });
           break;
         case 'pdf':
-          console.log('Opening PDF:', item.downloadUrl, item.name); // Debug log
+          console.log('Opening PDF with:', { pdfSrc: item.downloadUrl, fileName: item.name }); // Debug
           openWindow('pdf-viewer', { pdfSrc: item.downloadUrl, fileName: item.name });
           break;
         case 'text':

@@ -51,12 +51,12 @@ export const PDFViewerApp: React.FC<PDFViewerProps> = ({ pdfSrc, fileName }) => 
 
       {/* PDF Embed */}
       <div className="flex-1">
-        <embed
+        <iframe
           src={pdfSrc}
-          type="application/pdf"
           width="100%"
           height="100%"
           className="border-0"
+          title={fileName || 'PDF Document'}
         />
       </div>
     </div>
