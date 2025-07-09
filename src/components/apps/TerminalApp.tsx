@@ -380,14 +380,6 @@ export const TerminalApp: React.FC<{ windowId: string }> = () => {
       className="h-full bg-black text-green-400 font-mono text-sm overflow-hidden flex flex-col"
       onClick={() => inputRef.current?.focus()}
     >
-      {/* Fullscreen indicator - only show when in fullscreen */}
-      {isFullscreen && (
-        <div className="absolute top-4 right-4 z-[9999] text-green-400 text-xs opacity-70">
-          <div className="bg-black/80 px-2 py-1 rounded border border-green-400/30">
-            🖥️ FULLSCREEN MODE - Press ESC or type "fullscreen" to exit
-          </div>
-        </div>
-      )}
       
       <div 
         className="flex-1 overflow-auto p-4 custom-scrollbar"
