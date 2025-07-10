@@ -93,7 +93,7 @@ This approach not only showcases Shashikant’s work but also immerses the visit
 ## Repository Info 📁📝🔗
 
 * **Author**: Shashikant
-* **GitHub**: [github.com/ShashikantKataria/portfolio-OS](https://github.com/shashix07/portfolio-OS)
+* **GitHub**: [portfolioOS](https://github.com/shashix07/portfolio-OS)
 * **License**: MIT
 * **Technologies Used**: React/Vite, TypeScript, HTML5, CSS3, Modern UI Libraries
 
