@@ -20,7 +20,6 @@ export const ContactApp: React.FC<{ windowId: string }> = () => {
     try {
       // Call your deployed email API service
       const apiKey = import.meta.env.VITE_EMAIL_API_KEY;
-      console.log('API Key:', apiKey); // Debugging line to check API key
       const response = await fetch('https://theemailservice.vercel.app/api/contact-form', {
         method: 'POST',
         headers: {
