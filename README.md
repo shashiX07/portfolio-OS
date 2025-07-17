@@ -95,6 +95,7 @@ This approach not only showcases Shashikant’s work but also immerses the visit
 * **Author**: Shashikant
 * **GitHub**: [portfolioOS](https://github.com/shashix07/portfolio-OS)
 * **License**: MIT
+* **Live Link**: [visit here](https://webos-portfolio.vercel.app/)
 * **Technologies Used**: React/Vite, TypeScript, HTML5, CSS3, Modern UI Libraries
 
 Feel free to explore the repository, fork the project, or reach out with feedback. 🙌🚀💬
